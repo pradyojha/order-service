@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: order-service
+
+order:
+  service:
+    region: local        # this is the value we'll override from the environment
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,env
+  endpoint:
+    health:
+      probes:
+        enabled: true     # turns on liveness/readiness groups — Kubernetes uses these laterspring.application.name=order-service
