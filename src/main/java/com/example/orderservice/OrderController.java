@@ -18,7 +18,7 @@ public class OrderController {
 
   @GetMapping("/{id}")
   public Order getOrder(@PathVariable String id) {
-    return new Order(id, "CONFIRMED", region, LocalDate.now().toString());
+    return new Order(id, "PLACED", region, LocalDate.now().toString());
   }
 
   // A Java record = a concise immutable data carrier; Spring serializes it to JSON automatically.
