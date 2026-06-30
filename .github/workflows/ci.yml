@@ -1,0 +1,23 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]      # run when commits land on main
+  pull_request:             # run on every PR, against any branch
+
+jobs:
+  build:
+    runs-on: ubuntu-latest  # GitHub gives you a fresh Linux VM per run
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven        # caches ~/.m2 so dependencies don't re-download every run
+
+      - name: Build and test
+        run: mvn -B clean verify
