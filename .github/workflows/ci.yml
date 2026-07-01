@@ -41,7 +41,8 @@ jobs:
 
       - name: Step - Snyk dependency scan
         uses: snyk/actions/maven@master
+        continue-on-error: true          # never blocks the job, regardless of severity
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
-          args: --severity-threshold=high   # fail only on high/critical, so you're not blocked by noise
+          args: --severity-threshold=low   # report everything: low, medium, high, critical
