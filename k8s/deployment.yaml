@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-service
+spec:
+  replicas: 2                        # run two identical Pods
+  selector:
+    matchLabels:
+      app: order-service            # this Deployment manages Pods with this label
+  template:                          # the Pod blueprint
+    metadata:
+      labels:
+        app: order-service
+    spec:
+      containers:
+        - name: order-service
+          image: order-service:1.0
+          imagePullPolicy: IfNotPresent   # use the image we loaded; don't try to pull from a registry
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: order-service-config
+            - secretRef:
+                name: order-service-secret
+          readinessProbe:                 # "is this Pod ready for traffic yet?"
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          livenessProbe:                  # "is this Pod still healthy, or should I restart it?"
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8080
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          resources:
+            requests:                     # what the Pod is guaranteed
+              cpu: 250m
+              memory: 256Mi
+            limits:                       # the ceiling it can't exceed
+              cpu: 500m
+              memory: 512Mi
