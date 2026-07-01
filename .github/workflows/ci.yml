@@ -31,3 +31,18 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: mvn -B clean verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=pradyojha_order-service
+
+  security:
+    name: Job - Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Step - Check out the code
+        uses: actions/checkout@v4
+
+      - name: Step - Snyk dependency scan
+        uses: snyk/actions/maven@master
+        continue-on-error: true          # never blocks the job, regardless of severity
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=low   # report everything: low, medium, high, critical
