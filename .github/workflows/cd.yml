@@ -28,7 +28,7 @@ jobs:
       - name: Build, test, and Sonar scan
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: mvn -B verify sonar:sonar
+        run: mvn -B clean verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=pradyojha_order-service
 
   # ---- Stage 2: dependency security gate ----
   security:
