@@ -5,12 +5,31 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/api/orders")
 public class OrderController {
+  private final BlobService blobService;
+
+  public OrderController(BlobService blobService) {
+    this.blobService = blobService;
+  }
+
+  @PostMapping("/{id}/receipt")
+  public String uploadReceipt(@PathVariable String id, @RequestBody String content) {
+    blobService.uploadReceipt(id, content);
+    return "Receipt stored for order " + id;
+  }
+
+  @GetMapping("/{id}/receipt")
+  public String getReceipt(@PathVariable String id) {
+    String receipt = blobService.downloadReceipt(id);
+    return receipt != null ? receipt : "No receipt found for order " + id;
+  }
 
   // Injected from config (application.yml or an environment variable) — never hardcoded.
   @Value("${order.service.region}")
