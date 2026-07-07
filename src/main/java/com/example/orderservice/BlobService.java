@@ -4,6 +4,7 @@ import com.azure.identity.DefaultAzureCredentialBuilder;
 import com.azure.storage.blob.BlobContainerClient;
 import com.azure.storage.blob.BlobServiceClientBuilder;
 import com.azure.storage.blob.models.BlobStorageException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -15,16 +16,20 @@ public class BlobService {
 
   private final BlobContainerClient containerClient;
 
+  @Autowired
   public BlobService(
       @Value("${azure.storage.account}") String accountName,
       @Value("${azure.storage.container}") String containerName) {
-
     // DefaultAzureCredential: uses your `az login` locally, Workload Identity on AKS.
-    this.containerClient = new BlobServiceClientBuilder()
+    this(new BlobServiceClientBuilder()
         .endpoint("https://" + accountName + ".blob.core.windows.net")
         .credential(new DefaultAzureCredentialBuilder().build())
         .buildClient()
-        .getBlobContainerClient(containerName);
+        .getBlobContainerClient(containerName));
+  }
+
+  BlobService(BlobContainerClient containerClient) {
+    this.containerClient = containerClient;
   }
 
   public void uploadReceipt(String orderId, String content) {
