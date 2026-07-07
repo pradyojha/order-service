@@ -15,3 +15,7 @@ management:
     health:
       probes:
         enabled: true     # turns on liveness/readiness groups — Kubernetes uses these laterspring.application.name=order-service
+azure:
+  storage:
+    account: salearn4471        # your storage account name
+    container: receipts
