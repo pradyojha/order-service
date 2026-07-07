@@ -1,0 +1,80 @@
+name: CD
+
+on:
+  push:
+    branches: [ main ]        # runs after a merge to main
+
+permissions:
+  id-token: write             # REQUIRED: lets the job fetch an OIDC token for Azure
+  contents: read
+
+env:
+  ACR_NAME: acrlearn4471                       # <-- your ACR name
+  IMAGE: acrlearn4471.azurecr.io/order-service # <-- your ACR login server + repo
+
+jobs:
+  # ---- Stage 1: quality gate ----
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Build, test, and Sonar scan
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: mvn -B verify sonar:sonar
+
+  # ---- Stage 2: dependency security gate ----
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Snyk dependency scan
+        uses: snyk/actions/maven@master
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=low
+
+  # ---- Stage 3: build image, scan it, push to ACR ----
+  image:
+    needs: [ build, security ]        # only runs if BOTH gates passed
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to Azure (OIDC, no password)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Log in to ACR
+        run: az acr login --name ${{ env.ACR_NAME }}
+
+      - name: Build image (tagged with the commit SHA)
+        run: docker build -t ${{ env.IMAGE }}:${{ github.sha }} .
+
+      - name: Scan image with Snyk
+        uses: snyk/actions/docker@master
+        continue-on-error: true       # report vulns without blocking, while learning
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          image: ${{ env.IMAGE }}:${{ github.sha }}
+
+      - name: Push image to ACR
+        run: docker push ${{ env.IMAGE }}:${{ github.sha }}
